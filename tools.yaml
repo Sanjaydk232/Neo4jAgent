@@ -109,44 +109,6 @@ tools:
       ORDER BY date DESC
       LIMIT 5
 
-  customer-recent-reviews:
-    kind: neo4j-cypher
-    source: my-neo4j-source
-    description: Latest 10 reviews from a recently active customer (index-friendly).
-    parameters: []
-    statement: |
-      CALL {
-        MATCH (r:Review)
-        WHERE r.review_date IS NOT NULL
-        WITH r
-        ORDER BY r.review_date DESC
-        LIMIT 1
-        MATCH (c:Customer)-[:WROTE]->(r)
-        RETURN c
-      }
-      MATCH (c)-[:WROTE]->(r:Review)-[:REVIEWS]->(p:Product)
-      RETURN c.customer_id AS customer_id,
-             r.review_date AS date,
-             r.star_rating AS rating,
-             p.product_id AS product_id,
-             p.product_title AS title
-      ORDER BY date DESC
-      LIMIT 10
-
-  search-reviews-demo:
-    kind: neo4j-cypher
-    source: my-neo4j-source
-    description: Full‑text search for 'great learning' across headline/body.
-    parameters: []
-    statement: |
-      CALL db.index.fulltext.queryNodes('review_text_ft', '\"great learning\"~2')
-      YIELD node, score
-      MATCH (node)-[:REVIEWS]->(p:Product)
-      RETURN p.product_id AS product_id, p.product_title AS title,
-             node.review_id AS review_id, node.star_rating AS rating, node.review_date AS date,
-             score
-      ORDER BY score DESC, date DESC
-      LIMIT 5
 
 
 toolsets:
@@ -159,5 +121,3 @@ toolsets:
     - top-products-camera
     - product-stats-demo
     - recent-reviews-demo
-    - customer-recent-reviews
-    - search-reviews-demo
