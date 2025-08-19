@@ -61,9 +61,7 @@ async def main():
             "Use: top-products-baby. Brief: top 3 Baby products.",
             "Use: top-products-beauty. Brief: top 3 Beauty products.",
             "Use: product-stats-demo. Brief: stats for B00992CF6W.",
-            "Use: recent-reviews-demo. Brief: latest 3 reviews overall.",
-            "Use: customer-recent-reviews. Brief: last 3 reviews from a given customer.",
-            "Use: search-reviews-demo. Brief: find 3 reviews containing 'excellent'."
+            "Use: recent-reviews-demo. Brief: latest 3 reviews overall."
         ]
 
 
