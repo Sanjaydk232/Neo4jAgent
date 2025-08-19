@@ -1,0 +1,163 @@
+sources:
+  my-neo4j-source:
+    kind: "neo4j"
+    uri: "bolt://localhost:7687"
+    user: neo4j
+    password: aa11aa11!
+    database: "neo4j"
+
+tools:
+
+  top-products-apparel:
+    kind: neo4j-cypher
+    source: my-neo4j-source
+    description: Top 5 Apparel products by review count.
+    parameters: []
+    statement: |
+      MATCH (p:Product {product_category: 'Apparel'})<-[:REVIEWS]-(r:Review)
+      WITH p, count(r) AS review_count
+      ORDER BY review_count DESC
+      LIMIT 5
+      RETURN p.product_id AS product_id, p.product_title AS product_title, review_count
+
+  top-products-automotive:
+    kind: neo4j-cypher
+    source: my-neo4j-source
+    description: Top 5 Automotive products by review count.
+    parameters: []
+    statement: |
+      MATCH (p:Product {product_category: 'Automotive'})<-[:REVIEWS]-(r:Review)
+      WITH p, count(r) AS review_count
+      ORDER BY review_count DESC
+      LIMIT 5
+      RETURN p.product_id AS product_id, p.product_title AS product_title, review_count
+
+  top-products-baby:
+    kind: neo4j-cypher
+    source: my-neo4j-source
+    description: Top 5 Baby products by review count.
+    parameters: []
+    statement: |
+      MATCH (p:Product {product_category: 'Baby'})<-[:REVIEWS]-(r:Review)
+      WITH p, count(r) AS review_count
+      ORDER BY review_count DESC
+      LIMIT 5
+      RETURN p.product_id AS product_id, p.product_title AS product_title, review_count
+
+  top-products-beauty:
+    kind: neo4j-cypher
+    source: my-neo4j-source
+    description: Top 5 Beauty products by review count.
+    parameters: []
+    statement: |
+      MATCH (p:Product {product_category: 'Beauty'})<-[:REVIEWS]-(r:Review)
+      WITH p, count(r) AS review_count
+      ORDER BY review_count DESC
+      LIMIT 5
+      RETURN p.product_id AS product_id, p.product_title AS product_title, review_count
+
+  top-products-books:
+    kind: neo4j-cypher
+    source: my-neo4j-source
+    description: Top 5 Books products by review count.
+    parameters: []
+    statement: |
+      MATCH (p:Product {product_category: 'Books'})<-[:REVIEWS]-(r:Review)
+      WITH p, count(r) AS review_count
+      ORDER BY review_count DESC
+      LIMIT 5
+      RETURN p.product_id AS product_id, p.product_title AS product_title, review_count
+
+  top-products-camera:
+    kind: neo4j-cypher
+    source: my-neo4j-source
+    description: Top 5 Camera products by review count.
+    parameters: []
+    statement: |
+      MATCH (p:Product {product_category: 'Camera'})<-[:REVIEWS]-(r:Review)
+      WITH p, count(r) AS review_count
+      ORDER BY review_count DESC
+      LIMIT 5
+      RETURN p.product_id AS product_id, p.product_title AS product_title, review_count
+
+  product-stats-demo:
+    kind: neo4j-cypher
+    source: my-neo4j-source
+    description: Stats for demo product B00992CF6W (count, avg, verified ratio).
+    parameters: []
+    statement: |
+      MATCH (p:Product {product_id: 'B00992CF6W'})<-[:REVIEWS]-(r:Review)
+      RETURN p.product_id AS product_id,
+             p.product_title AS product_title,
+             count(r) AS review_count,
+             round(avg(toFloat(r.star_rating)), 2) AS avg_rating,
+             round(avg(CASE WHEN r.verified_purchase IN ['Y','Yes', true] THEN 1.0 ELSE 0.0 END), 3) AS verified_ratio
+
+  recent-reviews-demo:
+    kind: neo4j-cypher
+    source: my-neo4j-source
+    description: 5 most recent reviews for B00992CF6W.
+    parameters: []
+    statement: |
+      MATCH (p:Product {product_id: 'B00992CF6W'})<-[:REVIEWS]-(r:Review)
+      WHERE r.review_date IS NOT NULL
+      RETURN r.review_id AS review_id,
+             r.star_rating AS rating,
+             r.review_date AS date,
+             coalesce(r.review_headline, '') AS headline,
+             substring(coalesce(r.review_body, ''), 0, 200) AS snippet
+      ORDER BY date DESC
+      LIMIT 5
+
+  customer-recent-reviews:
+    kind: neo4j-cypher
+    source: my-neo4j-source
+    description: Latest 10 reviews from a recently active customer (index-friendly).
+    parameters: []
+    statement: |
+      CALL {
+        MATCH (r:Review)
+        WHERE r.review_date IS NOT NULL
+        WITH r
+        ORDER BY r.review_date DESC
+        LIMIT 1
+        MATCH (c:Customer)-[:WROTE]->(r)
+        RETURN c
+      }
+      MATCH (c)-[:WROTE]->(r:Review)-[:REVIEWS]->(p:Product)
+      RETURN c.customer_id AS customer_id,
+             r.review_date AS date,
+             r.star_rating AS rating,
+             p.product_id AS product_id,
+             p.product_title AS title
+      ORDER BY date DESC
+      LIMIT 10
+
+  search-reviews-demo:
+    kind: neo4j-cypher
+    source: my-neo4j-source
+    description: Full‑text search for 'great learning' across headline/body.
+    parameters: []
+    statement: |
+      CALL db.index.fulltext.queryNodes('review_text_ft', '\"great learning\"~2')
+      YIELD node, score
+      MATCH (node)-[:REVIEWS]->(p:Product)
+      RETURN p.product_id AS product_id, p.product_title AS title,
+             node.review_id AS review_id, node.star_rating AS rating, node.review_date AS date,
+             score
+      ORDER BY score DESC, date DESC
+      LIMIT 5
+
+
+toolsets:
+  my-toolset:
+    - top-products-apparel
+    - top-products-automotive
+    - top-products-baby
+    - top-products-beauty
+    - top-products-books
+    - top-products-camera
+    - product-stats-demo
+    - recent-reviews-demo
+    - customer-recent-reviews
+    - search-reviews-demo
